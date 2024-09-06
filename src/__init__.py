@@ -1,13 +1,15 @@
 import logging
 import re
 import sys
-from typing import List, Callable, Any, Union
+from typing import List, Callable, Any
 import mobase
 
 if sys.version_info >= (3, 9):
     Tuple = tuple
+    Dict = dict
+    Set = set
 else:
-    from typing import Tuple
+    from typing import Tuple, Dict, Set
 
 def has(obj: Any, attr: str) -> Any:
     if not obj:
@@ -20,7 +22,7 @@ class Plugin:
         self.name = name
 
         # add exceptions here:
-        self.dict = {
+        self.dict: Dict[str, Set[str]] = {
             # "mod1 regex": ["1st plugin substr", "substr in 2nd", "etc."] ,
             # "mod2 regex": ["substr in 1st", "substr in 2nd", "etc."]
         }
@@ -107,21 +109,21 @@ class PluginSync(mobase.IPluginTool):
     def tooltip(self) -> str:
         return "Enables & sorts plugins to match mod load order"
 
-    def icon(self) -> any:
+    def icon(self) -> Any:
         if self._version >= mobase.VersionInfo(2, 5, 0):
             from PyQt6.QtGui import QIcon
         else:
             from PyQt5.QtGui import QIcon
         return QIcon()
 
-    def selectimpl(self, impls: List[Tuple[mobase.VersionInfo, Callable]]) -> Callable:
+    def selectimpl(self, impls: List[Tuple[mobase.VersionInfo, Any]]) -> Any:
         for version, impl in impls:
             if self._version >= version:
                 return impl
         return None
 
     # Plugin Logic
-    def display(self) -> bool:
+    def display(self) -> None:
         isMaster = self.selectimpl([(mobase.VersionInfo(2, 5, 0),
                                      has(self._pluginList, 'isMasterFlagged')),
                                     (mobase.VersionInfo(2, 4, 0),
@@ -182,8 +184,6 @@ class PluginSync(mobase.IPluginTool):
         self._organizer.refresh()
 
         self._log.info('Sync complete')
-
-        return True
 
 
 # Tell Mod Organizer to initialize the plugin
