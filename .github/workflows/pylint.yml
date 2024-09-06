@@ -32,4 +32,4 @@ jobs:
         pip install pylint mobase-stubs ${{ matrix.pyqt-version }}
     - name: Analysing the code with pylint
       run: |
-        pylint --rcfile .pylintrc $(git ls-files '*.py')
+        pylint $(git ls-files '*.py')
