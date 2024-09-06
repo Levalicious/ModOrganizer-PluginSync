@@ -1,8 +1,9 @@
-import mobase
-import re
-from typing import List, Callable
+
 import logging
+import re
 import sys
+from typing import List, Callable
+import mobase
 
 if sys.version_info >= (3, 9):
     Tuple = tuple
@@ -122,10 +123,14 @@ class PluginSync(mobase.IPluginTool):
 
     # Plugin Logic
     def display(self) -> bool:
-        isMaster = self.selectimpl([(mobase.VersionInfo(2, 5, 0), has(self._pluginList, 'isMasterFlagged')), 
-                                    (mobase.VersionInfo(2, 4, 0), has(self._pluginList, 'isMaster'))])
-        feature = self.selectimpl([(mobase.VersionInfo(2, 5, 2), has(has(self._organizer, 'gameFeatures')(), 'gameFeature')),
-                                   (mobase.VersionInfo(2, 4, 0), has(has(self._organizer, 'managedGame')(), 'feature'))])
+        isMaster = self.selectimpl([(mobase.VersionInfo(2, 5, 0), 
+                                     has(self._pluginList, 'isMasterFlagged')),
+                                    (mobase.VersionInfo(2, 4, 0), 
+                                     has(self._pluginList, 'isMaster'))])
+        feature = self.selectimpl([(mobase.VersionInfo(2, 5, 2), 
+                                    has(has(self._organizer, 'gameFeatures')(), 'gameFeature')),
+                                   (mobase.VersionInfo(2, 4, 0),
+                                    has(has(self._organizer, 'managedGame')(), 'feature'))])
         
         self._log.info('Sync started...')
         # Get all plugins as a list
@@ -136,7 +141,7 @@ class PluginSync(mobase.IPluginTool):
             allPlugins,
             key=lambda x: Plugin(self._modList.priority(self._pluginList.origin(x)), x)
         )
-
+        
         # Split into two lists, master files and regular plugins
         plugins = []
         masters = []
@@ -162,7 +167,7 @@ class PluginSync(mobase.IPluginTool):
             # Check if all masters are present
             for pmaster in pmasters:
                 if pmaster.lower() not in allLowered:
-                    self._log.warn(f'{pmaster} not present, disabling {plugin}')
+                    self._log.warning(f'{pmaster} not present, disabling {plugin}')
                     canEnable = False
                     break
             # Set the plugin state accordingly
