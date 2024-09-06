@@ -72,9 +72,9 @@ class PluginSync(mobase.IPluginTool):
         self._pluginList = organizer.pluginList()
 
         self._version = self._organizer.appVersion()
-        isSupported = self._version >= mobase.VersionInfo(2, 2, 2)
+        isSupported = self._version >= mobase.VersionInfo(2, 4, 0)
         if not isSupported:
-            self._log.error('PluginSync does not support MO2 versions older than 2.5.0')
+            self._log.error('PluginSync does not support MO2 versions older than 2.4.0')
         return isSupported
 
     # Basic info
@@ -118,9 +118,9 @@ class PluginSync(mobase.IPluginTool):
     # Plugin Logic
     def display(self) -> bool:
         isMaster = self.selectimpl([(mobase.VersionInfo(2, 5, 0), getattr(self._pluginList, 'isMasterFlagged', None)), 
-                                    (mobase.VersionInfo(2, 0, 0), getattr(self._pluginList, 'isMaster', None))])
+                                    (mobase.VersionInfo(2, 4, 0), getattr(self._pluginList, 'isMaster', None))])
         feature = self.selectimpl([(mobase.VersionInfo(2, 5, 2), getattr(self._organizer.gameFeatures(), 'gameFeature', None)),
-                                   (mobase.VersionInfo(2, 0, 0), getattr(self._organizer.managedGame(), 'feature', None))])
+                                   (mobase.VersionInfo(2, 4, 0), getattr(self._organizer.managedGame(), 'feature', None))])
         
         self._log.info('Sync started...')
         # Get all plugins as a list
