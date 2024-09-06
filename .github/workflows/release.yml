@@ -1,0 +1,29 @@
+name: Typecheck
+
+on:
+  push:
+    branches:
+      - 'main'
+
+jobs:
+  Release:
+    name: Release
+    runs-on: windows-latest
+    steps:
+    - name: Check shell and Windows version
+      run: |
+        $PSVersionTable.PSVersion
+        $env:SHELL
+        [Environment]::OSVersion.VersionString
+    - uses: actions/checkout@v4
+    - name: Install Qt
+      uses: jurplel/install-qt-action@v4.0.0
+    - name: Set up Python ${{ matrix.config.py }}
+      uses: actions/setup-python@v3
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install mypy mobase-stubs PyQt6
+    - name: Typecheck
+      run: |
+        mypy $(git ls-files '*.py')
