@@ -134,9 +134,9 @@ class PluginSync(mobase.IPluginTool):
                                    (mobase.VersionInfo(2, 4, 0),
                                     has(has(self._organizer, 'managedGame')(), 'feature'))])
         ACTIVE = self.selectimpl([(mobase.VersionInfo(2, 5, 0), mobase.PluginState.ACTIVE),
-                                  (mobase.VersionInfo(2, 4, 0), 1)])
+                                  (mobase.VersionInfo(2, 4, 0), 2)])
         INACTIVE = self.selectimpl([(mobase.VersionInfo(2, 5, 0), mobase.PluginState.INACTIVE),
-                                    (mobase.VersionInfo(2, 4, 0), 0)])
+                                    (mobase.VersionInfo(2, 4, 0), 1)])
 
         self._log.info('Sync started...')
         # Get all plugins as a list
