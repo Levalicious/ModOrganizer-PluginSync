@@ -100,7 +100,7 @@ class PluginSync(mobase.IPluginTool):
         return "Sync Plugins"
 
     def tooltip(self) -> str:
-        return "Applies plugins to match mod load order"
+        return "Enables & sorts plugins to match mod load order"
 
     def icon(self) -> any:
         if self._version >= mobase.VersionInfo(2, 5, 2):
