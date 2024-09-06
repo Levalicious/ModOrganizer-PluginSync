@@ -1,4 +1,4 @@
-name: Typecheck
+name: Release
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - '**'
 
 jobs:
-  Release:
+  release:
     name: Release
     runs-on: windows-latest
     steps:
