@@ -1,15 +1,17 @@
 import logging
 import re
 import sys
-from typing import List, Callable, Any
+from typing import Callable
 import mobase
 
 if sys.version_info >= (3, 9):
-    Tuple = tuple
-    Dict = dict
-    Set = set
+    from builtins import list as List
+    from builtins import tuple as Tuple
+    from builtins import dict as Dict
+    from builtins import set as Set
+    from builtins import any as Any
 else:
-    from typing import Tuple, Dict, Set
+    from typing import List, Tuple, Dict, Set, Any
 
 def has(obj: Any, attr: str) -> Any:
     if not obj:
@@ -111,9 +113,9 @@ class PluginSync(mobase.IPluginTool):
 
     def icon(self) -> Any:
         if self._version >= mobase.VersionInfo(2, 5, 0):
-            from PyQt6.QtGui import QIcon
+            from PyQt6.QtGui import QIcon # type: ignore
         else:
-            from PyQt5.QtGui import QIcon
+            from PyQt5.QtGui import QIcon # type: ignore
         return QIcon()
 
     def selectimpl(self, impls: List[Tuple[mobase.VersionInfo, Any]]) -> Any:
