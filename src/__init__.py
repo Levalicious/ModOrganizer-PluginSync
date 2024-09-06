@@ -1,14 +1,29 @@
-import mobase
+import logging
 import re
-from typing import List
+import sys
+from typing import Callable, Any
+import mobase
+
+if sys.version_info >= (3, 9):
+    from builtins import list as List
+    from builtins import tuple as Tuple
+    from builtins import dict as Dict
+    from builtins import set as Set
+else:
+    from typing import List, Tuple, Dict, Set
+
+def has(obj: Any, attr: str) -> Any:
+    if not obj:
+        return None
+    return getattr(obj, attr, lambda *args, **kwargs: None)
 
 class Plugin:
-    def __init__(self, priority, name):
+    def __init__(self, priority, name) -> None:
         self.priority = priority
         self.name = name
 
         # add exceptions here:
-        self.dict = {
+        self.dict: Dict[str, Set[str]] = {
             # "mod1 regex": ["1st plugin substr", "substr in 2nd", "etc."] ,
             # "mod2 regex": ["substr in 1st", "substr in 2nd", "etc."]
         }
@@ -53,22 +68,22 @@ class PluginSync(mobase.IPluginTool):
     _modList: mobase.IModList
     _pluginList: mobase.IPluginList
 
-    _isMo2Updated: bool
+    _version: mobase.VersionInfo
 
-    def __init__(self):
+    def __init__(self) -> None:
+        self._log = logging.getLogger(__name__)
         super().__init__()
 
-    def init(self, organizer: mobase.IOrganizer):
+    def init(self, organizer: mobase.IOrganizer) -> bool:
         self._organizer = organizer
         self._modList = organizer.modList()
         self._pluginList = organizer.pluginList()
 
-        version = self._organizer.appVersion().canonicalString()
-        versionx = re.sub("[^0-9.]", "", version)
-        self._version = float(".".join(versionx.split(".", 2)[:-1]))
-        self._isMo2Updated = self._version >= 2.5
-
-        return True
+        self._version = self._organizer.appVersion()
+        isSupported = self._version >= mobase.VersionInfo(2, 4, 0)
+        if not isSupported:
+            self._log.error('PluginSync does not support MO2 versions older than 2.4.0')
+        return isSupported
 
     # Basic info
     def name(self) -> str:
@@ -81,11 +96,7 @@ class PluginSync(mobase.IPluginTool):
         return "Syncs plugin load order with mod order"
 
     def version(self) -> mobase.VersionInfo:
-        return mobase.VersionInfo(2, 2, 0, mobase.ReleaseType.FINAL)
-
-    # Settings
-    def isActive(self) -> str:
-        return (self._organizer.managedGame().feature(mobase.GamePlugins))
+        return mobase.VersionInfo(2, 2, 1)
 
     def settings(self) -> List[mobase.PluginSetting]:
         return [
@@ -97,56 +108,87 @@ class PluginSync(mobase.IPluginTool):
         return "Sync Plugins"
 
     def tooltip(self) -> str:
-        return "Enables all Mods one at a time to match load order"
+        return "Enables & sorts plugins to match mod load order"
 
-    def icon(self):
-        if (self._isMo2Updated):
-            from PyQt6.QtGui import QIcon
+    def icon(self) -> Any:
+        if self._version >= mobase.VersionInfo(2, 5, 0):
+            from PyQt6.QtGui import QIcon # type: ignore
         else:
-            from PyQt5.QtGui import QIcon
-
+            from PyQt5.QtGui import QIcon # type: ignore
         return QIcon()
 
+    def selectimpl(self, impls: List[Tuple[mobase.VersionInfo, Any]]) -> Any:
+        for version, impl in impls:
+            if self._version >= version:
+                return impl
+        return None
+
     # Plugin Logic
-    def display(self) -> bool:
+    def display(self) -> None:
+        isMaster = self.selectimpl([(mobase.VersionInfo(2, 5, 0),
+                                     has(self._pluginList, 'isMasterFlagged')),
+                                    (mobase.VersionInfo(2, 4, 0),
+                                     has(self._pluginList, 'isMaster'))])
+        feature = self.selectimpl([(mobase.VersionInfo(2, 5, 2),
+                                    has(has(self._organizer, 'gameFeatures')(), 'gameFeature')),
+                                   (mobase.VersionInfo(2, 4, 0),
+                                    has(has(self._organizer, 'managedGame')(), 'feature'))])
+        ACTIVE = self.selectimpl([(mobase.VersionInfo(2, 5, 0), mobase.PluginState.ACTIVE),
+                                  (mobase.VersionInfo(2, 4, 0), 2)])
+        INACTIVE = self.selectimpl([(mobase.VersionInfo(2, 5, 0), mobase.PluginState.INACTIVE),
+                                    (mobase.VersionInfo(2, 4, 0), 1)])
+
+        self._log.info('Sync started...')
         # Get all plugins as a list
         allPlugins = self._pluginList.pluginNames()
 
         # Sort the list by plugin origin
         allPlugins = sorted(
             allPlugins,
-            key=lambda
-            x: Plugin(self._modList.priority(self._pluginList.origin(x)), x)
+            key=lambda x: Plugin(self._modList.priority(self._pluginList.origin(x)), x)
         )
 
         # Split into two lists, master files and regular plugins
         plugins = []
         masters = []
-        for plugin in allPlugins:
-            if (self._isMo2Updated):
-                isMasterPlugin = self._pluginList.isMasterFlagged(plugin)
-            else:
-                isMasterPlugin = self._pluginList.isMaster(plugin)
 
-            if (isMasterPlugin):
+        for plugin in allPlugins:
+            if isMaster(plugin):
                 masters.append(plugin)
             else:
                 plugins.append(plugin)
 
         # Merge masters into the plugin list at the begining
         allPlugins = masters + plugins
+        allLowered = [x.lower() for x in allPlugins]
 
         # Set load order
         self._pluginList.setLoadOrder(allPlugins)
 
+        # Scan through all plugins
+        for plugin in allPlugins:
+            # Get the masters of the current plugin
+            pmasters = self._pluginList.masters(plugin)
+            canEnable = True
+            # Check if all masters are present
+            for pmaster in pmasters:
+                if pmaster.lower() not in allLowered:
+                    self._log.warning(f'{pmaster} not present, disabling {plugin}')
+                    canEnable = False
+                    break
+            # Set the plugin state accordingly
+            if canEnable:
+                self._pluginList.setState(plugin, ACTIVE)
+            else:
+                self._pluginList.setState(plugin, INACTIVE)
+
         # Update the plugin list to use the new load order
-        self._organizer.managedGame().feature(
-            mobase.GamePlugins).writePluginLists(self._pluginList)
+        feature(mobase.GamePlugins).writePluginLists(self._pluginList)
 
         # Refresh the UI
         self._organizer.refresh()
 
-        return True
+        self._log.info('Sync complete')
 
 
 # Tell Mod Organizer to initialize the plugin
