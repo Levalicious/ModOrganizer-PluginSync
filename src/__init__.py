@@ -133,6 +133,10 @@ class PluginSync(mobase.IPluginTool):
                                     has(has(self._organizer, 'gameFeatures')(), 'gameFeature')),
                                    (mobase.VersionInfo(2, 4, 0),
                                     has(has(self._organizer, 'managedGame')(), 'feature'))])
+        ACTIVE = self.selectimpl([(mobase.VersionInfo(2, 5, 0), mobase.PluginState.ACTIVE),
+                                  (mobase.VersionInfo(2, 4, 0), 1)])
+        INACTIVE = self.selectimpl([(mobase.VersionInfo(2, 5, 0), mobase.PluginState.INACTIVE),
+                                    (mobase.VersionInfo(2, 4, 0), 0)])
 
         self._log.info('Sync started...')
         # Get all plugins as a list
@@ -174,9 +178,9 @@ class PluginSync(mobase.IPluginTool):
                     break
             # Set the plugin state accordingly
             if canEnable:
-                self._pluginList.setState(plugin, mobase.PluginState.ACTIVE)
+                self._pluginList.setState(plugin, ACTIVE)
             else:
-                self._pluginList.setState(plugin, mobase.PluginState.INACTIVE)
+                self._pluginList.setState(plugin, INACTIVE)
 
         # Update the plugin list to use the new load order
         feature(mobase.GamePlugins).writePluginLists(self._pluginList)
