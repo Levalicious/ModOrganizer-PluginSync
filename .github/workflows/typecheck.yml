@@ -10,7 +10,7 @@ jobs:
       matrix:
         config:
           - { py: '3.8.7',  qt: '5', qtm: '15.2', mo: '2.4.0' }
-          - { py: '3.11.5', qt: '6', qtm: '5.3',  mo: '2.5.0.dev17' }
+          - { py: '3.11.5', qt: '6', qtm: '5.3',  mo: '2.5.0.dev16' }
           - { py: '3.12.3', qt: '6', qtm: '7.1',  mo: '2.5.2' }
     steps:
     - uses: actions/checkout@v4
