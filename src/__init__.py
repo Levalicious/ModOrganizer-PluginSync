@@ -88,7 +88,7 @@ class PluginSync(mobase.IPluginTool):
         return "Syncs plugin load order with mod order"
 
     def version(self) -> mobase.VersionInfo:
-        return mobase.VersionInfo(2, 2, 0, mobase.ReleaseType.FINAL)
+        return mobase.VersionInfo(2, 2, 1)
 
     def settings(self) -> List[mobase.PluginSetting]:
         return [
