@@ -1,6 +1,10 @@
 name: Typecheck
 
-on: [push, workflow_dispatch]
+on:
+  push:
+    branches:
+      - '**'
+  workflow_dispatch:
 
 jobs:
   build:
@@ -22,6 +26,7 @@ jobs:
       uses: actions/setup-python@v3
       with:
         python-version: ${{ matrix.config.py }}
+        cache: 'pip'
     - name: Install dependencies
       run: |
         python -m pip install --upgrade --force-reinstall pip
