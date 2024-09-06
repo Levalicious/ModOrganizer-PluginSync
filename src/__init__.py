@@ -9,6 +9,11 @@ if sys.version_info >= (3, 9):
 else:
     from typing import Tuple
 
+def has(obj: any, attr: str):
+    if not obj:
+        return None
+    return getattr(obj, attr, lambda *args, **kwargs: None)
+
 class Plugin:
     def __init__(self, priority, name) -> None:
         self.priority = priority
@@ -72,9 +77,9 @@ class PluginSync(mobase.IPluginTool):
         self._pluginList = organizer.pluginList()
 
         self._version = self._organizer.appVersion()
-        isSupported = self._version >= mobase.VersionInfo(2, 2, 2)
+        isSupported = self._version >= mobase.VersionInfo(2, 4, 0)
         if not isSupported:
-            self._log.error('PluginSync does not support MO2 versions older than 2.5.0')
+            self._log.error('PluginSync does not support MO2 versions older than 2.4.0')
         return isSupported
 
     # Basic info
@@ -88,7 +93,7 @@ class PluginSync(mobase.IPluginTool):
         return "Syncs plugin load order with mod order"
 
     def version(self) -> mobase.VersionInfo:
-        return mobase.VersionInfo(2, 2, 0, mobase.ReleaseType.FINAL)
+        return mobase.VersionInfo(2, 2, 1)
 
     def settings(self) -> List[mobase.PluginSetting]:
         return [
@@ -103,7 +108,7 @@ class PluginSync(mobase.IPluginTool):
         return "Enables & sorts plugins to match mod load order"
 
     def icon(self) -> any:
-        if self._version >= mobase.VersionInfo(2, 5, 2):
+        if self._version >= mobase.VersionInfo(2, 5, 0):
             from PyQt6.QtGui import QIcon
         else:
             from PyQt5.QtGui import QIcon
@@ -117,10 +122,10 @@ class PluginSync(mobase.IPluginTool):
 
     # Plugin Logic
     def display(self) -> bool:
-        isMaster = self.selectimpl([(mobase.VersionInfo(2, 5, 0), getattr(self._pluginList, 'isMasterFlagged', None)), 
-                                    (mobase.VersionInfo(2, 0, 0), getattr(self._pluginList, 'isMaster', None))])
-        feature = self.selectimpl([(mobase.VersionInfo(2, 5, 2), getattr(self._organizer.gameFeatures(), 'gameFeature', None)),
-                                   (mobase.VersionInfo(2, 0, 0), getattr(self._organizer.managedGame(), 'feature', None))])
+        isMaster = self.selectimpl([(mobase.VersionInfo(2, 5, 0), has(self._pluginList, 'isMasterFlagged')), 
+                                    (mobase.VersionInfo(2, 4, 0), has(self._pluginList, 'isMaster'))])
+        feature = self.selectimpl([(mobase.VersionInfo(2, 5, 2), has(has(self._organizer, 'gameFeatures')(), 'gameFeature')),
+                                   (mobase.VersionInfo(2, 4, 0), has(has(self._organizer, 'managedGame')(), 'feature'))])
         
         self._log.info('Sync started...')
         # Get all plugins as a list
