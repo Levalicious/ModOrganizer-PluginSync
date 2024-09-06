@@ -12,9 +12,7 @@ jobs:
     steps:
     - name: Check shell and Windows version
       run: |
-        $PSVersionTable.PSVersion
-        $env:SHELL
-        [Environment]::OSVersion.VersionString
+        (Get-Content -Path "src/__init__.py" -Raw) -match 'def version\(self\) -> mobase\.VersionInfo:\s*return mobase\.VersionInfo\((\d+),\s*(\d+),\s*(\d+)\)' | Out-Null; "$($Matches[1]).$($Matches[2]).$($Matches[3])"
     - uses: actions/checkout@v4
     - name: Install Qt
       uses: jurplel/install-qt-action@v4.0.0
