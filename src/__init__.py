@@ -1,7 +1,7 @@
 import logging
 import re
 import sys
-from typing import List, Callable
+from typing import List, Callable, Any
 import mobase
 
 if sys.version_info >= (3, 9):
@@ -9,7 +9,7 @@ if sys.version_info >= (3, 9):
 else:
     from typing import Tuple
 
-def has(obj: any, attr: str):
+def has(obj: Any, attr: str) -> Callable:
     if not obj:
         return None
     return getattr(obj, attr, lambda *args, **kwargs: None)
