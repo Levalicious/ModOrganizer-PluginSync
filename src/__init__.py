@@ -1,4 +1,3 @@
-
 import logging
 import re
 import sys
@@ -123,15 +122,15 @@ class PluginSync(mobase.IPluginTool):
 
     # Plugin Logic
     def display(self) -> bool:
-        isMaster = self.selectimpl([(mobase.VersionInfo(2, 5, 0), 
+        isMaster = self.selectimpl([(mobase.VersionInfo(2, 5, 0),
                                      has(self._pluginList, 'isMasterFlagged')),
-                                    (mobase.VersionInfo(2, 4, 0), 
+                                    (mobase.VersionInfo(2, 4, 0),
                                      has(self._pluginList, 'isMaster'))])
-        feature = self.selectimpl([(mobase.VersionInfo(2, 5, 2), 
+        feature = self.selectimpl([(mobase.VersionInfo(2, 5, 2),
                                     has(has(self._organizer, 'gameFeatures')(), 'gameFeature')),
                                    (mobase.VersionInfo(2, 4, 0),
                                     has(has(self._organizer, 'managedGame')(), 'feature'))])
-        
+
         self._log.info('Sync started...')
         # Get all plugins as a list
         allPlugins = self._pluginList.pluginNames()
@@ -141,11 +140,11 @@ class PluginSync(mobase.IPluginTool):
             allPlugins,
             key=lambda x: Plugin(self._modList.priority(self._pluginList.origin(x)), x)
         )
-        
+
         # Split into two lists, master files and regular plugins
         plugins = []
         masters = []
-        
+
         for plugin in allPlugins:
             if isMaster(plugin):
                 masters.append(plugin)
