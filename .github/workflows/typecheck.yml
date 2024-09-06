@@ -3,7 +3,7 @@ name: Typecheck
 on: [push, workflow_dispatch]
 
 jobs:
-  build:
+  typecheck:
     name: MO ${{ matrix.config.mo }}
     runs-on: windows-latest
     strategy:
