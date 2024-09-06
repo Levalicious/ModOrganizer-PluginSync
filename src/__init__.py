@@ -1,7 +1,7 @@
 import logging
 import re
 import sys
-from typing import Callable
+from typing import Callable, Any
 import mobase
 
 if sys.version_info >= (3, 9):
@@ -9,9 +9,8 @@ if sys.version_info >= (3, 9):
     from builtins import tuple as Tuple
     from builtins import dict as Dict
     from builtins import set as Set
-    from builtins import any as Any
 else:
-    from typing import List, Tuple, Dict, Set, Any
+    from typing import List, Tuple, Dict, Set
 
 def has(obj: Any, attr: str) -> Any:
     if not obj:
