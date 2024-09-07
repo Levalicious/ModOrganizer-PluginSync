@@ -8,9 +8,8 @@ if sys.version_info >= (3, 9):
     from builtins import list as List
     from builtins import tuple as Tuple
     from builtins import dict as Dict
-    from builtins import set as Set
 else:
-    from typing import List, Tuple, Dict, Set
+    from typing import List, Tuple, Dict
 
 def has(obj: Any, attr: str) -> Any:
     if not obj:
@@ -23,9 +22,9 @@ class Plugin:
         self.name = name
 
         # add exceptions here:
-        self.dict: Dict[str, Set[str]] = {
-            # "mod1 regex": ["1st plugin substr", "substr in 2nd", "etc."] ,
-            # "mod2 regex": ["substr in 1st", "substr in 2nd", "etc."]
+        self.dict: Dict[str, List[str]] = {
+            # 'mod1 regex': ['1st plugin substr', 'substr in 2nd', 'etc.'] ,
+            # 'mod2 regex': ['substr in 1st', 'substr in 2nd', 'etc.']
         }
 
     def __lt__(self, other) -> bool:
@@ -46,15 +45,18 @@ class Plugin:
         # should come last. if not enough use self.dict for the exceptions
 
         patts = \
-            ["(:?hot|bug)[ ._-]?fix",
-                r"\bfix\b",
-                "patch",
-                "add[ ._-]?on",
-                "expansion",
-                "expanded",
-                "extension",
-                "ext",
-                "remastered"]
+            ['(:?hot|bug)[ ._-]?fix',
+                r'\bfix\b',
+                'patch',
+                'add[ ._-]?on',
+                'expansion',
+                'expanded',
+                'extension',
+                'ext',
+                'ng',
+                'conversion'
+                'fix'
+                'remastered']
         for pattern in patts:
             if re.search(pattern, lc_a) != re.search(pattern, lc_b):
                 return re.search(pattern, lc_a) is None
@@ -87,28 +89,32 @@ class PluginSync(mobase.IPluginTool):
 
     # Basic info
     def name(self) -> str:
-        return "Sync Plugins"
+        return 'Sync Plugins'
 
     def author(self) -> str:
-        return "coldrifting"
+        return 'coldrifting'
 
     def description(self) -> str:
-        return "Syncs plugin load order with mod order"
+        return 'Syncs plugin load order with mod order'
 
     def version(self) -> mobase.VersionInfo:
         return mobase.VersionInfo(2, 2, 1)
 
     def settings(self) -> List[mobase.PluginSetting]:
         return [
-            mobase.PluginSetting("enabled", "enable this plugin", True)
+            mobase.PluginSetting('enabled', 'enable this plugin', True),
+            mobase.PluginSetting('masters', 'Check missing masters', True)
         ]
+    
+    def isActive(self) -> bool:
+        return bool(self._organizer.pluginSetting(self.name(), 'enabled'))
 
     # Display
     def displayName(self) -> str:
-        return "Sync Plugins"
+        return 'Sync Plugins'
 
     def tooltip(self) -> str:
-        return "Enables & sorts plugins to match mod load order"
+        return 'Enables & sorts plugins to match mod load order'
 
     def icon(self) -> Any:
         if self._version >= mobase.VersionInfo(2, 5, 0):
@@ -138,6 +144,8 @@ class PluginSync(mobase.IPluginTool):
         INACTIVE = self.selectimpl([(mobase.VersionInfo(2, 5, 0), mobase.PluginState.INACTIVE),
                                     (mobase.VersionInfo(2, 4, 0), 1)])
 
+
+        checkMasters = bool(self._organizer.pluginSetting(self.name(), 'masters'))      
         self._log.info('Sync started...')
         # Get all plugins as a list
         allPlugins = self._pluginList.pluginNames()
@@ -160,7 +168,8 @@ class PluginSync(mobase.IPluginTool):
 
         # Merge masters into the plugin list at the begining
         allPlugins = masters + plugins
-        allLowered = [x.lower() for x in allPlugins]
+        if checkMasters:
+            allLowered = [x.lower() for x in allPlugins]
 
         # Set load order
         self._pluginList.setLoadOrder(allPlugins)
@@ -171,11 +180,12 @@ class PluginSync(mobase.IPluginTool):
             pmasters = self._pluginList.masters(plugin)
             canEnable = True
             # Check if all masters are present
-            for pmaster in pmasters:
-                if pmaster.lower() not in allLowered:
-                    self._log.warning(f'{pmaster} not present, disabling {plugin}')
-                    canEnable = False
-                    break
+            if checkMasters:
+                for pmaster in pmasters:
+                    if pmaster.lower() not in allLowered:
+                        self._log.warning(f'{pmaster} not present, disabling {plugin}')
+                        canEnable = False
+                        break
             # Set the plugin state accordingly
             if canEnable:
                 self._pluginList.setState(plugin, ACTIVE)
