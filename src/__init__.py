@@ -103,7 +103,8 @@ class PluginSync(mobase.IPluginTool):
     def settings(self) -> List[mobase.PluginSetting]:
         return [
             mobase.PluginSetting('enabled', 'enable this plugin', True),
-            mobase.PluginSetting('masters', 'Check missing masters', True)
+            mobase.PluginSetting('enablePlugins', 'Enable plugins if mod is enabled', True),
+            mobase.PluginSetting('checkMasters', 'Check missing masters', True)
         ]
     
     def isActive(self) -> bool:
@@ -145,7 +146,7 @@ class PluginSync(mobase.IPluginTool):
                                     (mobase.VersionInfo(2, 4, 0), 1)])
 
 
-        checkMasters = bool(self._organizer.pluginSetting(self.name(), 'masters'))      
+        checkMasters = bool(self._organizer.pluginSetting(self.name(), 'checkMasters'))      
         self._log.info('Sync started...')
         # Get all plugins as a list
         allPlugins = self._pluginList.pluginNames()
@@ -174,23 +175,24 @@ class PluginSync(mobase.IPluginTool):
         # Set load order
         self._pluginList.setLoadOrder(allPlugins)
 
-        # Scan through all plugins
-        for plugin in allPlugins:
-            # Get the masters of the current plugin
-            pmasters = self._pluginList.masters(plugin)
-            canEnable = True
-            # Check if all masters are present
-            if checkMasters:
-                for pmaster in pmasters:
-                    if pmaster.lower() not in allLowered:
-                        self._log.warning(f'{pmaster} not present, disabling {plugin}')
-                        canEnable = False
-                        break
-            # Set the plugin state accordingly
-            if canEnable:
-                self._pluginList.setState(plugin, ACTIVE)
-            else:
-                self._pluginList.setState(plugin, INACTIVE)
+        if bool(self._organizer.pluginSetting(self.name(), 'enablePlugins')):
+            # Scan through all plugins
+            for plugin in allPlugins:
+                # Get the masters of the current plugin
+                pmasters = self._pluginList.masters(plugin)
+                canEnable = True
+                # Check if all masters are present
+                if checkMasters:
+                    for pmaster in pmasters:
+                        if pmaster.lower() not in allLowered:
+                            self._log.warning(f'{pmaster} not present, disabling {plugin}')
+                            canEnable = False
+                            break
+                # Set the plugin state accordingly
+                if canEnable:
+                    self._pluginList.setState(plugin, ACTIVE)
+                else:
+                    self._pluginList.setState(plugin, INACTIVE)
 
         # Update the plugin list to use the new load order
         feature(mobase.GamePlugins).writePluginLists(self._pluginList)
